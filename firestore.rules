@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return request.auth != null &&
+      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    match /users/{userId} {
+      allow read, update: if isOwner(userId) || isAdmin();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if isAdmin();
+    }
+
+    match /courses/{courseId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /lessons/{lessonId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /enrollments/{enrollmentId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    match /progress/{progressId} {
+      allow read, write: if isOwner(request.resource.data.userId) || isAdmin();
+    }
+
+    match /workshops/{workshopId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /programs/{programId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    match /certificates/{certificateId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /blogPosts/{postId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
